@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# next
+.next/
+.swc/
+next-env.d.ts
+*.tsbuildinfo
+
+# local database
+.data/
+
+# local secret files
+.env*.local
+
+# debug
+npm-debug.*
+
+# mac
+.DS_Store
