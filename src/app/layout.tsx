@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { ApolloProvider } from "@/ApolloProvider";
+import "./globals.css";
 
 export const metadata: Metadata = { title: "Library" };
 

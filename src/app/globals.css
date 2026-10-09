@@ -1,0 +1,21 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 50rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid #ccc;
+  padding: 0.4rem 0.75rem;
+  text-align: left;
+}
+
+form {
+  margin: 1rem 0;
+}
