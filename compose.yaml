@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: library
+      POSTGRES_PASSWORD: library
+      POSTGRES_DB: library
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "library", "-d", "library"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  app:
+    build: .
+    image: library-app
+    environment:
+      DATABASE_URL: postgres://library:library@db:5432/library
+    ports:
+      - 127.0.0.1:3000:3000
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:

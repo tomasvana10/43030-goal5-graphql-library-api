@@ -1,0 +1,11 @@
+.git
+.github
+.next
+.swc
+.data
+node_modules
+tests
+*.md
+.env*
+Dockerfile
+compose.yaml
