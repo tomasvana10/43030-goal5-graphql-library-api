@@ -1,0 +1,77 @@
+name: Continuous Integration
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: library
+          POSTGRES_PASSWORD: library
+          POSTGRES_DB: library_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U library -d library_test"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgres://library:library@localhost:5432/library_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-app
+
+      - name: TypeScript Type Check
+        run: npm run typecheck
+
+      - name: Unit and Integration Tests
+        run: npm test -- --ci
+
+  image:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Start Containers
+        run: docker compose up --detach --build
+
+      - name: Query the Running App
+        run: |
+          curl --fail --silent --show-error --retry 30 --retry-all-errors --retry-delay 2 \
+            --header 'Content-Type: application/json' \
+            --data '{"query":"{ books { id } }"}' \
+            http://localhost:3000/api/graphql | grep '"books"'
+
+      - name: Show Container Logs
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop Containers
+        if: always()
+        run: docker compose down --volumes
+
+      # Pushes the image that was just tested instead of rebuilding it
+      - name: Publish Image
+        if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          for tag in latest "$GITHUB_SHA"; do
+            docker tag library-app "$image:$tag"
+            docker push "$image:$tag"
+          done
